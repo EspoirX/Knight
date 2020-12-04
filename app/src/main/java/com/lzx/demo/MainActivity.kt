@@ -4,9 +4,9 @@ import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.lzx.service.IPay
-import com.lzx.service.IUser
+import com.im.service.ISendMessage
 import com.lzx.knight.Knight
+import com.user.service.IUserManager
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -14,31 +14,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         btn.setOnClickListener {
-            //调用 app 模块方法
-            showToast(Knight.of(IPay::class.java)?.pay())
+            //调用 User模块中 UserManagerImpl 方法
+            val info = Knight.of(IUserManager::class.java, "UserManagerImpl")?.getUserInfo()
+            showToast("nickname = " + info?.username.orEmpty())
         }
         btn1.setOnClickListener {
-            //调用 moduleA 模块方法
-            showToast(Knight.of(IPay::class.java, "Apple")?.pay())
+            //调用 User模块中 SaveUserManager 方法
+            Knight.of(IUserManager::class.java, "SaveUserManager")?.saveUserInfo(this)
         }
         btn2.setOnClickListener {
-            //调用 moduleB 模块方法
-            showToast(Knight.of(IPay::class.java, "WeChat")?.pay())
-        }
-
-        btn3.setOnClickListener {
-
-        }
-        btn4.setOnClickListener {
-
-        }
-        btn5.setOnClickListener {
-
-        }
-
-        btn6.setOnClickListener {
-            val info = Knight.of(IUser::class.java)?.getUserInfo()
-            showToast(info?.username.orEmpty())
+            //调用 IM 模块方法
+            Knight.of(ISendMessage::class.java)?.sendMessage(this, "大家好")
         }
     }
 }

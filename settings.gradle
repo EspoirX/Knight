@@ -1,7 +1,11 @@
 include ':IM:service'
-include ':moduleB'
 include ':IM:impl'
+
+include ':USER:impl'
+include ':USER:service'
+
 include ':knight-plugin'
 include ':knight'
+
 include ':app'
 rootProject.name = "demo"

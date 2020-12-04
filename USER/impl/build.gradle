@@ -25,6 +25,7 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+        kotlinOptions.freeCompilerArgs += ['-module-name', "com.lzx.user.impl"]
     }
     kotlinOptions {
         jvmTarget = '1.8'
@@ -38,5 +39,5 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.2.1'
 
-    implementation project(':IM:service')
+    implementation project(':USER:service')
 }

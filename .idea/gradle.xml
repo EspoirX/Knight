@@ -14,10 +14,12 @@
             <option value="$PROJECT_DIR$/IM" />
             <option value="$PROJECT_DIR$/IM/impl" />
             <option value="$PROJECT_DIR$/IM/service" />
+            <option value="$PROJECT_DIR$/USER" />
+            <option value="$PROJECT_DIR$/USER/impl" />
+            <option value="$PROJECT_DIR$/USER/service" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/knight" />
             <option value="$PROJECT_DIR$/knight-plugin" />
-            <option value="$PROJECT_DIR$/moduleB" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

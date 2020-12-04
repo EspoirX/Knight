@@ -17,6 +17,7 @@ import java.util.zip.ZipEntry
 class KnightTransform(project: Project?) : HunterTransform(project) {
 
     var serviceImplMap = HashMap<String, String>()
+    var serviceMap = HashMap<String, String>()
 
     init {
         this.bytecodeWeaver = object : BaseWeaver() {
@@ -25,7 +26,7 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
             }
 
             override fun wrapClassWriter(classWriter: ClassWriter?): ClassVisitor {
-                return AnnotationClassVisitor(Opcodes.ASM7, classWriter, serviceImplMap)
+                return AnnotationClassVisitor(Opcodes.ASM7, classWriter, serviceMap, serviceImplMap)
             }
         }
     }
@@ -39,6 +40,7 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
     ) {
         super.transform(context, inputs, referencedInputs, outputProvider, isIncremental)
 
+        println("serviceImplMap size = " + serviceImplMap.size)
         val byteCodeWriter = KnightByteCodeWriter(serviceImplMap)
         val metaFile = outputProvider?.getContentLocation(
             "Knight",
