@@ -167,3 +167,5 @@ class SaveUserImpl : IUserManager() {
 [Android-模块化-面向接口编程](https://tech.youzan.com/android-mo-kuai-hua-mian-xiang-jie-kou-bian-cheng/)
 
 [利用ASM实现的轻量级跨Module依赖注入框架](https://juejin.cn/post/6844904074094051342)
+
+具体例子可下载代码查看。
