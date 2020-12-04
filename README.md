@@ -6,10 +6,10 @@ Knight 是一个模块内、模块间的数据通信框架，适合于面向接�
 
 首先要在 gradle 中引入 Knight 插件：
 ```gradle
-    dependencies {
-        classpath "com.android.tools.build:gradle:4.1.1"
-        classpath 'com.lzx.knight.plugin:knight:1.0.0'
-    }
+dependencies {
+    classpath "com.android.tools.build:gradle:4.1.1"
+    classpath 'com.lzx.knight.plugin:knight:1.0.0'
+}
 ```
 
 然后在 app 的 gradle 中使用插件：
@@ -96,7 +96,7 @@ Knight.of(ISendMessage::class.java, "SendMessageOne")?.sendMessage(this, "我调
 Knight.of(ISendMessage::class.java, "SendMessageTwo")?.sendMessage(this, "我调用的是实现二")
 ```
 
-**问题：标记的功能接口能继承其他接口吗？ **
+** 问题：标记的功能接口能继承其他接口吗？ **
 
 可以。只要正确标记好 @KnightService 即可，如下：
 ```kotlin
@@ -112,7 +112,7 @@ interface IUserManager : BaseUserInterface{
 如果我们要调用的功能接口是 IUserManager，那么注解就应该标记在它身上，BaseUserInterface 则不需要标记。
 
 
-**问题：接上面问题，如果基础接口方法太多，我不需要所有方法都要实现，怎么做？ **
+** 问题：接上面问题，如果基础接口方法太多，我不需要所有方法都要实现，怎么做？ **
 
 ```kotlin
 interface BaseUserInterface {
