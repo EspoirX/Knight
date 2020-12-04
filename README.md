@@ -164,6 +164,8 @@ class SaveUserImpl : IUserManager() {
 
 具体的思想可以看以下文章：
 
+[Knight 的实现原理](https://github.com/EspoirX/Knight/blob/main/%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86.md)
+
 [Android-模块化-面向接口编程](https://tech.youzan.com/android-mo-kuai-hua-mian-xiang-jie-kou-bian-cheng/)
 
 [利用ASM实现的轻量级跨Module依赖注入框架](https://juejin.cn/post/6844904074094051342)

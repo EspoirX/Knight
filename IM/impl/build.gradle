@@ -40,5 +40,12 @@ dependencies {
     implementation 'com.google.android.material:material:1.2.1'
 
     implementation project(':IM:service')
+
+
+
+
+
+
+
     implementation project(':USER:service')  //如果需要用到USER模块的功能只需要依赖USER模块的接口即可
 }
