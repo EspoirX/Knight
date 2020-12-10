@@ -75,9 +75,9 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
                 name.contains("R\$") ||
                 name.endsWith("R.class") ||
                 name.endsWith("BuildConfig.class") ||
-                name.endsWith("Spear.class") ||
-                name.endsWith("SpearImpl.class") ||
-                name.endsWith("SpearService.class") ||
+                name.endsWith("Knight.class") ||
+                name.endsWith("KnightImpl.class") ||
+                name.endsWith("KnightService.class") ||
                 name.startsWith("kotlinx") ||
                 name.startsWith("kotlin") ||
                 name.startsWith("com/google/android") ||

@@ -5,7 +5,7 @@ import org.objectweb.asm.*
 import java.util.*
 
 /**
- * 创建 SpearServiceManager 类
+ * 创建 KnightServiceManager 类
  */
 class KnightByteCodeWriter(
     private val serviceImplMap: HashMap<String, String>
@@ -21,7 +21,7 @@ class KnightByteCodeWriter(
             V1_7, ACC_PUBLIC + ACC_SUPER, "com/lzx/knight/KnightServiceManager", null,
             "java/lang/Object", arrayOf("com/lzx/knight/IServiceManager")
         )
-        cw.visitSource("SpearServiceManager.java", null)
+        cw.visitSource("KnightServiceManager.java", null)
         //创建变量
         run {
             fv = cw.visitField(
