@@ -3,9 +3,7 @@ package com.lzx.knight
 import java.util.concurrent.ConcurrentHashMap
 
 object Knight {
-    /**
-     * 存储实例的map
-     */
+
     private val mCenter: ConcurrentHashMap<String, Any?> = ConcurrentHashMap()
     private val serviceImplMap = hashMapOf<String, String>()
     private var servicesManager: IServiceManager? = null
@@ -25,17 +23,17 @@ object Knight {
      */
     fun <T> of(clazz: Class<T>, register: String = "KnightDefault"): T? {
         val key = clazz.name.replace(".", "/") + "_" + register
-        var axis = mCenter[key]
-        if (axis == null) {
+        var knight = mCenter[key]
+        if (knight == null) {
             synchronized(clazz) {
                 try {
-                    axis = mCenter[key]
-                    if (axis == null) {
+                    knight = mCenter[key]
+                    if (knight == null) {
                         serviceImplMap[key]?.let {
                             val implClazz = it.replace("/", ".")
                             val impl = Class.forName(implClazz).newInstance()
                             mCenter[key] = impl
-                            axis = impl
+                            knight = impl
                         }
                     }
                 } catch (e: Exception) {
@@ -44,8 +42,6 @@ object Knight {
                 }
             }
         }
-        return axis as T?
+        return knight as T?
     }
-
-
 }

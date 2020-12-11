@@ -4,6 +4,8 @@ import com.android.build.api.transform.Context
 import com.android.build.api.transform.Format
 import com.android.build.api.transform.TransformInput
 import com.android.build.api.transform.TransformOutputProvider
+import com.plugin.knight.KnightConfig
+import com.plugin.knight.KnightExtension
 import com.quinn.hunter.transform.HunterTransform
 import com.quinn.hunter.transform.asm.BaseWeaver
 import org.gradle.api.Project
@@ -39,8 +41,6 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
         isIncremental: Boolean
     ) {
         super.transform(context, inputs, referencedInputs, outputProvider, isIncremental)
-
-        println("serviceImplMap size = " + serviceImplMap.size)
         val byteCodeWriter = KnightByteCodeWriter(serviceImplMap)
         val metaFile = outputProvider?.getContentLocation(
             "Knight",
@@ -64,9 +64,12 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
         jarOutputStream.close()
         fos.close()
 
-        val f = FileOutputStream("com.lzx.knight.KnightServiceManager.class")
-        f.write(byteCodeWriter.dump())
-        f.close()
+//        if (KnightConfig.debugSwitch) {
+//            //这个是为了在项目根目录生成一个文件，方便查看debug用，不要也行
+//            FileOutputStream("com.lzx.knight.KnightServiceManager.class").use {
+//                it.write(byteCodeWriter.dump())
+//            }
+//        }
     }
 
     private fun shouldProcessClass(name: String?): Boolean {
