@@ -8,7 +8,7 @@ import com.user.service.IUserManager
 /**
  *  IUserManager 接口有多个实现，需要在注解中标记 register 来区分
  */
-@KnightImpl(register = "SaveUserManager")
+@KnightImpl(key = "SaveUserManager")
 class SaveUserManager : IUserManager() {
 
     override fun saveUserInfo(context: Context) {

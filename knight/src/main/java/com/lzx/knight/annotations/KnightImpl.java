@@ -8,5 +8,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
 public @interface KnightImpl {
-    String register() default "KnightDefault";
+    String key() default "";
 }

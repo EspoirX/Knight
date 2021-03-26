@@ -15,8 +15,8 @@ dependencies {
     implementation localGroovy()
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'com.android.tools.build:gradle:4.1.1'
-    implementation 'com.android.tools.build:gradle-api:4.1.1'
     implementation 'com.quinn.hunter:hunter-transform:1.1.0'
+    implementation 'com.kronos.plugin:BasePlugin:0.2.1'
 }
 
 tasks.withType(JavaCompile) {

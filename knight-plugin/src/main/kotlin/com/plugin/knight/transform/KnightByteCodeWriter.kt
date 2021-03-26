@@ -11,7 +11,7 @@ class KnightByteCodeWriter(
     private val serviceImplMap: HashMap<String, String>
 ) {
 
-    fun dump(): ByteArray {
+    fun getCodeByte(): ByteArray {
         val cw = ClassWriter(0)
         var fv: FieldVisitor
         var mv: MethodVisitor
@@ -25,7 +25,7 @@ class KnightByteCodeWriter(
         //创建变量
         run {
             fv = cw.visitField(
-                ACC_PRIVATE + ACC_FINAL + ACC_STATIC, "serviceImplMap", "Ljava/util/HashMap;",
+                ACC_PRIVATE + ACC_FINAL + ACC_STATIC, "serviceMap", "Ljava/util/HashMap;",
                 "Ljava/util/HashMap<Ljava/lang/String;Ljava/lang/String;>;", null
             )
             fv.visitEnd()
@@ -62,7 +62,7 @@ class KnightByteCodeWriter(
         // getServiceImplMap 方法
         run {
             mv = cw.visitMethod(
-                ACC_PUBLIC, "getServiceImplMap", "()Ljava/util/HashMap;",
+                ACC_PUBLIC, "getServiceMap", "()Ljava/util/HashMap;",
                 "()Ljava/util/HashMap<Ljava/lang/String;Ljava/lang/String;>;", null
             )
             //添加 Override 注解
@@ -76,7 +76,7 @@ class KnightByteCodeWriter(
             mv.visitFieldInsn(
                 GETSTATIC,
                 "com/lzx/knight/KnightServiceManager",
-                "serviceImplMap",
+                "serviceMap",
                 "Ljava/util/HashMap;"
             )
             mv.visitInsn(ARETURN)
@@ -112,7 +112,7 @@ class KnightByteCodeWriter(
             mv.visitFieldInsn(
                 PUTSTATIC,
                 "com/lzx/knight/KnightServiceManager",
-                "serviceImplMap",
+                "serviceMap",
                 "Ljava/util/HashMap;"
             )
             //循环添加数据
@@ -124,7 +124,7 @@ class KnightByteCodeWriter(
                 mv.visitFieldInsn(
                     GETSTATIC,
                     "com/lzx/knight/KnightServiceManager",
-                    "serviceImplMap",
+                    "serviceMap",
                     "Ljava/util/HashMap;"
                 )
                 mv.visitLdcInsn(it.key)
@@ -146,9 +146,5 @@ class KnightByteCodeWriter(
         cw.visitEnd()
         return cw.toByteArray()
     }
-
-
-
-
 }
 

@@ -1,36 +1,44 @@
 package com.plugin.knight.transform
 
-import com.android.build.api.transform.Context
-import com.android.build.api.transform.Format
-import com.android.build.api.transform.TransformInput
-import com.android.build.api.transform.TransformOutputProvider
+import com.android.build.api.transform.*
+import com.android.build.gradle.internal.pipeline.TransformManager
+import com.google.common.collect.ImmutableSet
 import com.plugin.knight.KnightConfig
-import com.plugin.knight.KnightExtension
 import com.quinn.hunter.transform.HunterTransform
 import com.quinn.hunter.transform.asm.BaseWeaver
 import org.gradle.api.Project
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
+import java.io.File
 import java.io.FileOutputStream
-import java.util.jar.JarOutputStream
-import java.util.zip.ZipEntry
 
 class KnightTransform(project: Project?) : HunterTransform(project) {
 
-    var serviceImplMap = HashMap<String, String>()
-    var serviceMap = HashMap<String, String>()
+    private val knightServiceList = mutableListOf<String>()
+    private val knightImplList = mutableListOf<KnightImplInfo>()
+    var ms: Long = 0
 
     init {
+        ms = System.currentTimeMillis()
         this.bytecodeWeaver = object : BaseWeaver() {
             override fun isWeavableClass(fullQualifiedClassName: String?): Boolean {
                 return shouldProcessClass(fullQualifiedClassName)
             }
 
             override fun wrapClassWriter(classWriter: ClassWriter?): ClassVisitor {
-                return AnnotationClassVisitor(Opcodes.ASM7, classWriter, serviceMap, serviceImplMap)
+                return KnightClassVisitor(
+                    Opcodes.ASM7,
+                    classWriter,
+                    knightServiceList,
+                    knightImplList
+                )
             }
         }
+    }
+
+    private fun String.getMapKey(key: String?): String {
+        return if (key.isNullOrEmpty()) this else this + "_" + key
     }
 
     override fun transform(
@@ -41,35 +49,57 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
         isIncremental: Boolean
     ) {
         super.transform(context, inputs, referencedInputs, outputProvider, isIncremental)
-        val byteCodeWriter = KnightByteCodeWriter(serviceImplMap)
-        val metaFile = outputProvider?.getContentLocation(
+        val dest = outputProvider?.getContentLocation(
             "Knight",
-            outputTypes,
-            scopes,
-            Format.JAR
+            TransformManager.CONTENT_CLASS,
+            ImmutableSet.of(QualifiedContent.Scope.PROJECT),
+            Format.DIRECTORY
         ) ?: return
-
-        if (!metaFile.parentFile.exists()) {
-            metaFile.parentFile.mkdirs()
+        val map = hashMapOf<String, String>()
+        knightImplList.forEach { it ->
+            val interfaces = it.interfaces
+            if (interfaces.isNullOrEmpty()) {
+                //抽象类的情况
+                if (!it.superClass.isNullOrEmpty() && knightServiceList.contains(it.superClass)) {
+                    map[it.superClass!!.getMapKey(it.key)] = it.className
+                }
+            } else {
+                //过滤实现了 KnightService 的接口,如果有多个，取第一个
+                val knightInterface =
+                    interfaces.filter { knightServiceList.contains(it) }.getOrNull(0)
+                if (knightInterface != null) {
+                    map[knightInterface] = it.className
+                } else {
+                    //如果找不到接口，则查看一下继承的类有没有
+                    if (!it.superClass.isNullOrEmpty() && knightServiceList.contains(it.superClass)) {
+                        map[it.superClass!!.getMapKey(it.key)] = it.className
+                    }
+                }
+            }
         }
-        if (metaFile.exists()) {
-            metaFile.delete()
+        if (KnightConfig.isDebug) {
+            KnightConfig.showLog("======================================")
+            knightServiceList.forEach {
+                KnightConfig.showLog("knightService = $it")
+            }
+            KnightConfig.showLog("                                        ")
+            KnightConfig.showLog("======================================")
+            knightImplList.forEach {
+                KnightConfig.showLog("knightImpl = " + it.className + " interfaces = " + it.interfaces + " superClass = " + it.superClass + " key = " + it.key)
+            }
+            KnightConfig.showLog("                                        ")
+            KnightConfig.showLog("======================================")
+            map.forEach {
+                KnightConfig.showLog("key = " + it.key + " value = " + it.value)
+            }
         }
-        val fos = FileOutputStream(metaFile)
-        val jarOutputStream = JarOutputStream(fos)
-        val zipEntry = ZipEntry("com/lzx/knight/KnightServiceManager.class")
-        jarOutputStream.putNextEntry(zipEntry)
-        jarOutputStream.write(byteCodeWriter.dump())
-        jarOutputStream.closeEntry()
-        jarOutputStream.close()
-        fos.close()
 
-//        if (KnightConfig.debugSwitch) {
-//            //这个是为了在项目根目录生成一个文件，方便查看debug用，不要也行
-//            FileOutputStream("com.lzx.knight.KnightServiceManager.class").use {
-//                it.write(byteCodeWriter.dump())
-//            }
-//        }
+        val byteCodeWriter = KnightByteCodeWriter(map)
+        val file = File(dest, "com/lzx/knight/KnightServiceManager.class")
+        file.parentFile.mkdirs()
+        FileOutputStream(file).use { it.write(byteCodeWriter.getCodeByte()) }
+        KnightConfig.showLog("Knight AMS 耗时 = " + (System.currentTimeMillis() - ms))
+        KnightConfig.showLog("生成的文件地址 = " + file.absolutePath)
     }
 
     private fun shouldProcessClass(name: String?): Boolean {
@@ -90,4 +120,11 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
                 name.startsWith("org") ||
                 name.startsWith("androidx"))
     }
+
+    data class KnightImplInfo(
+        var className: String,
+        var interfaces: MutableList<String>?,
+        var superClass: String?,
+        var key: String?
+    )
 }

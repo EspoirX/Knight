@@ -1,5 +1,12 @@
 package com.plugin.knight
 
 object KnightConfig {
-    var debugSwitch = false
+
+    var isDebug = true
+
+    fun showLog(msg: String) {
+        if (isDebug) {
+            println(msg)
+        }
+    }
 }
