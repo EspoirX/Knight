@@ -4,10 +4,10 @@ import android.content.Context
 import android.widget.Toast
 import com.im.service.ISendMessage
 import com.lzx.knight.Knight
-import com.lzx.knight.annotations.KnightImpl
+import com.lzx.annoation.KnightImpl
 import com.user.service.IUserManager
 
-@KnightImpl
+@com.lzx.annoation.KnightImpl
 class SendMessageImpl : ISendMessage {
     override fun sendMessage(context: Context, msg: String) {
         //获取User模块的用户信息

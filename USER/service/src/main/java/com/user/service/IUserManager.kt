@@ -1,7 +1,7 @@
 package com.user.service
 
 import android.content.Context
-import com.lzx.knight.annotations.KnightService
+import com.lzx.annoation.KnightService
 
 /**
  * @KnightService 同样可以标记在抽象类上

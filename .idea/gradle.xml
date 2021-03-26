@@ -5,21 +5,20 @@
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="testRunner" value="PLATFORM" />
+        <option name="disableWrapperSourceDistributionNotification" value="true" />
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleJvm" value="1.8" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/IM" />
-            <option value="$PROJECT_DIR$/IM/impl" />
-            <option value="$PROJECT_DIR$/IM/service" />
             <option value="$PROJECT_DIR$/USER" />
             <option value="$PROJECT_DIR$/USER/impl" />
             <option value="$PROJECT_DIR$/USER/service" />
+            <option value="$PROJECT_DIR$/annoation" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/compiler" />
             <option value="$PROJECT_DIR$/knight" />
-            <option value="$PROJECT_DIR$/knight-plugin" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

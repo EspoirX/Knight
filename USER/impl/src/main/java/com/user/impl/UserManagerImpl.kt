@@ -1,7 +1,7 @@
 package com.user.impl
 
 
-import com.lzx.knight.annotations.KnightImpl
+import com.lzx.annoation.KnightImpl
 import com.user.service.IUserManager
 import com.user.service.UserInfo
 

@@ -1,10 +1,12 @@
-include ':IM:service'
-include ':IM:impl'
-
+include ':annoation'
+include ':compiler'
+//include ':IM:service'
+//include ':IM:impl'
+//
 include ':USER:impl'
 include ':USER:service'
-
-include ':knight-plugin'
+//
+//include ':knight-plugin'
 include ':knight'
 
 include ':app'

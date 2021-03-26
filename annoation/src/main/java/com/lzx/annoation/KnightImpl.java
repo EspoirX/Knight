@@ -1,4 +1,4 @@
-package com.lzx.knight.annotations;
+package com.lzx.annoation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
