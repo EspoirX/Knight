@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.im.service.ISendMessage
 import com.lzx.knight.Knight
+import com.lzx.knight.router.CompleteListener
 import com.user.service.IUserManager
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -25,6 +26,31 @@ class MainActivity : AppCompatActivity() {
         btn2.setOnClickListener {
             //调用 IM 模块方法
             Knight.of(ISendMessage::class.java)?.sendMessage(this, "大家好")
+        }
+
+        btnA?.setOnClickListener {
+            Knight.router(this, "ActivityA?name=102").start()
+        }
+        btnB?.setOnClickListener {
+            Knight.router(this, "ActivityB?name=103&sex=das")
+                .setScheme("大胸萝莉")
+                .start()
+        }
+        btnC?.setOnClickListener {
+            Knight.router(this, "ActivityC").start()
+        }
+        btnD?.setOnClickListener {
+            Knight.router(this, "KnightRouter://ActivityD")
+                .setCompleteListener(object : CompleteListener {
+                    override fun onSuccess() {
+                        showToast("转跳成功")
+                    }
+
+                    override fun onError(resultCode: Int, msg: String) {
+                        showToast("转跳失败")
+                    }
+                })
+                .start()
         }
     }
 }

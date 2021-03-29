@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
     <Button
@@ -12,9 +12,7 @@
         android:layout_height="50dp"
         android:layout_marginLeft="10dp"
         android:gravity="center"
-        android:text="获取用户信息"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:ignore="MissingConstraints" />
+        android:text="获取用户信息" />
 
     <Button
         android:id="@+id/btn1"
@@ -22,10 +20,7 @@
         android:layout_height="50dp"
         android:layout_marginLeft="10dp"
         android:gravity="center"
-        android:text="保存用户信息"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn"
-        tools:ignore="MissingConstraints" />
+        android:text="保存用户信息" />
 
     <Button
         android:id="@+id/btn2"
@@ -33,10 +28,39 @@
         android:layout_height="50dp"
         android:layout_marginLeft="10dp"
         android:gravity="center"
-        android:text="发送IM消息"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn1"
-        tools:ignore="MissingConstraints" />
+        android:text="发送IM消息" />
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <Button
+        android:id="@+id/btnA"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginLeft="10dp"
+        android:gravity="center"
+        android:text="A" />
+
+    <Button
+        android:id="@+id/btnB"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginLeft="10dp"
+        android:gravity="center"
+        android:text="B" />
+
+    <Button
+        android:id="@+id/btnC"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginLeft="10dp"
+        android:gravity="center"
+        android:text="C" />
+
+    <Button
+        android:id="@+id/btnD"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginLeft="10dp"
+        android:gravity="center"
+        android:text="D" />
+
+</LinearLayout>

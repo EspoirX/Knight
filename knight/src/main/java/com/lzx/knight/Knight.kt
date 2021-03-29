@@ -1,5 +1,8 @@
 package com.lzx.knight
 
+import android.content.Context
+import android.util.Log
+import com.lzx.knight.router.RouterBuilder
 import java.util.concurrent.ConcurrentHashMap
 
 object Knight {
@@ -44,5 +47,13 @@ object Knight {
             }
         }
         return knight as T?
+    }
+
+    fun router(context: Context?, path: String): RouterBuilder {
+        return RouterBuilder(context, path)
+    }
+
+    fun log(msg: String) {
+        Log.i("Knight", msg)
     }
 }
