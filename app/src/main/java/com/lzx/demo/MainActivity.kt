@@ -1,12 +1,14 @@
 package com.lzx.demo
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.im.service.ISendMessage
 import com.lzx.knight.Knight
 import com.lzx.knight.router.CompleteListener
+import com.lzx.knight.router.intercept.SyncInterceptor
 import com.user.service.IUserManager
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -29,11 +31,27 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnA?.setOnClickListener {
-            Knight.router(this, "ActivityA?name=102").start()
+            Knight.router(this, "ActivityA")
+                .addPathParam("name", "102")
+                .addInterceptor(object : SyncInterceptor {
+                    override fun process(
+                        path: String?,
+                        pathParam: HashMap<String, String>,
+                        intent: Intent
+                    ): String? {
+                        showToast("拦截器 path=" + path + " pathParam = " + pathParam.size)
+                        return path
+                    }
+
+                    override fun getTag(): String = "123"
+                })
+                .start()
         }
         btnB?.setOnClickListener {
-            Knight.router(this, "ActivityB?name=103&sex=das")
+            Knight.router(this, "ActivityB")
                 .setScheme("大胸萝莉")
+                .addPathParam("name", "103")
+                .addPathParam("sex", "das")
                 .start()
         }
         btnC?.setOnClickListener {

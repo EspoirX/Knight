@@ -49,7 +49,7 @@ object Knight {
         return knight as T?
     }
 
-    fun router(context: Context?, path: String): RouterBuilder {
+    fun router(context: Context?, path: String?): RouterBuilder {
         return RouterBuilder(context, path)
     }
 

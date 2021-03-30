@@ -5,8 +5,9 @@ import java.net.URLDecoder
 
 object RouterUtils {
 
-    fun String.getUrlParams(): HashMap<String, String> {
+    fun String?.getUrlParams(): HashMap<String, String> {
         val mapRequest = hashMapOf<String, String>()
+        if (this.isNullOrEmpty()) return mapRequest
         val strUrlParam = this.truncateUrlPage()
         if (strUrlParam.isNullOrEmpty()) {
             return mapRequest

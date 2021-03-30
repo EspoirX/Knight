@@ -5,14 +5,16 @@ import android.os.Bundle
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityOptionsCompat
 import com.lzx.knight.router.KnightRouter.FLAG
+import com.lzx.knight.router.intercept.ISyInterceptor
 import java.io.Serializable
 
-class RouterBuilder(internal val context: Context?, internal val path: String) {
+class RouterBuilder(internal val context: Context?, internal val path: String?) {
 
     companion object {
         private const val PKG = "com.lzx.knight.router."
 
         internal const val KEY_SCHEME: String = PKG + "scheme"
+        internal const val KEY_PATH_PARAMS: String = PKG + "path_params"
         internal const val KEY_INTENT_EXTRA: String = PKG + "intent_getBundle"
         internal const val KEY_REQUEST_CODE: String = PKG + "request_code"
         internal const val KEY_START_ACTIVITY_OPTIONS: String = PKG + "options"
@@ -22,6 +24,7 @@ class RouterBuilder(internal val context: Context?, internal val path: String) {
     }
 
     private val keyMap = hashMapOf<String, Any>()
+    private val pathParams = hashMapOf<String, String>()
 
     @Synchronized
     private fun getBundle(): Bundle {
@@ -101,6 +104,24 @@ class RouterBuilder(internal val context: Context?, internal val path: String) {
         val realScheme = if (scheme.endsWith(FLAG)) scheme else scheme + FLAG
         keyMap[KEY_SCHEME] = realScheme
     }
+
+    fun addPathParam(key: String, value: String) = apply {
+        var pathParams = keyMap[KEY_PATH_PARAMS] as HashMap<String, String>?
+        if (pathParams == null) {
+            pathParams = hashMapOf()
+            keyMap[KEY_PATH_PARAMS] = pathParams
+        }
+        pathParams[key] = value
+    }
+
+    fun attachInterceptors(interceptors: MutableList<ISyInterceptor>) = apply {
+        KnightRouter.attachInterceptors(interceptors)
+    }
+
+    fun addInterceptor(interceptor: ISyInterceptor?) = apply {
+        KnightRouter.addInterceptor(interceptor)
+    }
+
 
     fun limitPackage(limit: Boolean) = apply {
         keyMap[KEY_LIMIT_PACKAGE] = limit

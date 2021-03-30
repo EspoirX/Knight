@@ -1,20 +1,28 @@
 package com.lzx.knight.router
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.core.app.ActivityCompat
 import com.lzx.knight.Knight
+import com.lzx.knight.router.CompleteListener.Companion.CODE_ERROR
+import com.lzx.knight.router.CompleteListener.Companion.CODE_FORBIDDEN
+import com.lzx.knight.router.CompleteListener.Companion.CODE_NOT_FOUND
+import com.lzx.knight.router.CompleteListener.Companion.CODE_SUCCESS
 import com.lzx.knight.router.RouterUtils.getUrlParams
 import com.lzx.knight.router.RouterUtils.truncateUrlPage
-import java.util.concurrent.ConcurrentHashMap
+import com.lzx.knight.router.intercept.ISyInterceptor
+import com.lzx.knight.router.intercept.InterceptorCallback
+import com.lzx.knight.router.intercept.InterceptorService
 
 object KnightRouter {
 
     internal const val FLAG = "://"
     private var defaultScheme = "KnightRouter$FLAG"
 
-    private val routerCache: ConcurrentHashMap<String, String> = ConcurrentHashMap()
+    private var interceptorService = InterceptorService()
     private var routerMap = hashMapOf<String, String>()
 
     init {
@@ -31,63 +39,99 @@ object KnightRouter {
 
     /**
      * 获取目标界面全类名
+     *
+     * KnightRouter://ActivityC
+     * XIAN://ActivityD
+     *
+     *
+     * ActivityC
+     * XIAN://ActivityD
+     * XIAN://ActivityD?a=1&b=1
+     *
      */
     private fun getRouterTarget(path: String, scheme: String?): String? {
+        //获取 key
         val realPath: String = if (!path.truncateUrlPage().isNullOrEmpty()) {
             path.substring(0, path.indexOf("?"))
         } else {
             path
         }
+        //看下用户有没有自定义 scheme，如果有，则用自定义的
         val key: String = if (scheme.isNullOrEmpty()) {
+            //判断path中有没有 scheme
             if (realPath.contains(FLAG)) realPath else defaultScheme + realPath
         } else {
-            if (realPath.contains(FLAG)) {
-                val startIndex = realPath.indexOf(FLAG) + 3
-                val pathWithoutScheme = realPath.substring(startIndex, realPath.length)
-                scheme + pathWithoutScheme
+            if (realPath.contains(FLAG)) { //如果path中有scheme，则进行替换
+                val oldScheme = realPath.substring(0, realPath.indexOf(FLAG))
+                realPath.replace(oldScheme, scheme)
             } else {
-                scheme + realPath
+                if (scheme.contains(FLAG)) scheme + realPath else scheme + FLAG + realPath
             }
         }
-        var target = routerCache[key]
-        if (target.isNullOrEmpty()) {
-            synchronized(realPath) {
-                try {
-                    target = routerCache[key]
-                    if (target.isNullOrEmpty()) {
-                        routerMap[key]?.let {
-                            val realTarget = it.replace("/", ".")
-                            routerCache[key] = realTarget
-                            target = realTarget
-                        }
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    return ""
-                }
-            }
+        var target: String? = null
+        routerMap[key]?.let {
+            val realTarget = it.replace("/", ".")
+            target = realTarget
         }
         return target
     }
 
+    fun attachInterceptors(interceptors: MutableList<ISyInterceptor>) {
+        interceptorService.attachInterceptors(interceptors)
+    }
+
+    fun addInterceptor(interceptor: ISyInterceptor?) {
+        interceptorService.addInterceptor(interceptor)
+    }
+
+    /**
+     * 开始路由转跳
+     */
     fun startRouter(builder: RouterBuilder) {
         val routerPath = builder.path
-
         //监听
         val listener = builder.getExtra(RouterBuilder.KEY_COMPLETE_LISTENER) as CompleteListener?
 
-        if (routerPath.isEmpty()) {
+        //path 参数
+        val pathParams = builder.getExtra(RouterBuilder.KEY_PATH_PARAMS) as HashMap<String, String>?
+        val paramMap = routerPath?.getUrlParams() ?: hashMapOf()
+        if (pathParams?.isNullOrEmpty() == false) {
+            paramMap.putAll(pathParams)
+        }
+
+        // startActivity
+        val intent = Intent()
+        //拦截器
+        interceptorService
+            .doInterceptions(routerPath, paramMap, intent, object : InterceptorCallback {
+                override fun onContinue(path: String?) {
+                    handlerRouterParams(path, paramMap, intent, builder, listener)
+                }
+
+                override fun onInterrupt(exception: Throwable?) {
+                    listener?.onError(CODE_ERROR, exception?.message.orEmpty())
+                }
+            })
+    }
+
+    private fun handlerRouterParams(
+        routerPath: String?,
+        paramMap: HashMap<String, String>,
+        intent: Intent,
+        builder: RouterBuilder,
+        listener: CompleteListener?
+    ) {
+        if (routerPath.isNullOrEmpty()) {
             Knight.log("router path is empty")
-            listener?.onError(CompleteListener.CODE_ERROR, "router path is empty")
+            listener?.onError(CODE_ERROR, "router path is empty")
             return
         }
         val context = builder.context
         if (context == null) {
             Knight.log("router context is null")
-            listener?.onError(CompleteListener.CODE_ERROR, "router context is null")
+            listener?.onError(CODE_ERROR, "router context is null")
             return
         }
-
         // Extra
         val extras = builder.getExtra(RouterBuilder.KEY_INTENT_EXTRA) as Bundle?
         // 是否限制Intent的packageName，限制后只会启动当前App内的页面，不启动其他App的页面
@@ -100,37 +144,67 @@ object KnightRouter {
         val scheme = builder.getExtra(RouterBuilder.KEY_SCHEME) as String?
         // options
         val options = builder.getExtra(RouterBuilder.KEY_START_ACTIVITY_OPTIONS) as Bundle?
-        //获取url参数，只会显示在
-        val paramMap = routerPath.getUrlParams()
         //获取目标界面全类名
         val target = getRouterTarget(routerPath, scheme)
         if (target.isNullOrEmpty()) {
-            listener?.onError(CompleteListener.CODE_NOT_FOUND, "router target is not found")
+            listener?.onError(CODE_NOT_FOUND, "router target is not found")
             return
         }
-
-        //构建 Intent
-        val intent = Intent()
-        intent.setPackage(context.packageName)   // 设置package，先尝试启动App内的页面
-        intent.setClassName(context, target)
-        //配置参数
-        if (extras != null) {
-            intent.putExtras(extras)
+        var result =
+            startActivityImpl(context, intent, target, extras, paramMap, requestCode, options, anim)
+        if (limitPackage == true || result == CODE_SUCCESS) {
+            listener?.onSuccess()
+            return
         }
-        if (paramMap.isNotEmpty()) {
-            paramMap.forEach { intent.putExtra(it.key, it.value) }
-        }
-        //启动
-        if (requestCode != null && context is Activity) {
-            ActivityCompat.startActivityForResult(context, intent, requestCode, options)
+        // App内启动失败，再尝试启动App外页面
+        intent.setPackage(null)
+        result =
+            startActivityImpl(context, intent, target, extras, paramMap, requestCode, options, anim)
+        if (result == CODE_SUCCESS) {
+            listener?.onSuccess()
         } else {
-            ActivityCompat.startActivity(context, intent, options)
+            listener?.onError(result, "")
         }
-        //动画
-        if (context is Activity && anim != null && anim.size == 2) {
-            context.overridePendingTransition(anim[0], anim[1])
+    }
+
+    private fun startActivityImpl(
+        context: Context,
+        intent: Intent,
+        target: String,
+        extras: Bundle?,
+        paramMap: HashMap<String, String>,
+        requestCode: Int?,
+        options: Bundle?,
+        anim: IntArray?
+    ): Int {
+        try {
+            intent.setPackage(context.packageName)   // 设置package，先尝试启动App内的页面
+            intent.setClassName(context, target)
+            //配置参数
+            if (extras != null) {
+                intent.putExtras(extras)
+            }
+            if (paramMap.isNotEmpty()) {
+                paramMap.forEach { intent.putExtra(it.key, it.value) }
+            }
+            //启动
+            if (requestCode != null && context is Activity) {
+                ActivityCompat.startActivityForResult(context, intent, requestCode, options)
+            } else {
+                ActivityCompat.startActivity(context, intent, options)
+            }
+            //动画
+            if (context is Activity && anim != null && anim.size == 2) {
+                context.overridePendingTransition(anim[0], anim[1])
+            }
+            return CODE_SUCCESS
+        } catch (ex: ActivityNotFoundException) {
+            ex.printStackTrace()
+            return CODE_NOT_FOUND
+        } catch (ex: SecurityException) {
+            ex.printStackTrace()
+            return CODE_FORBIDDEN
         }
-        listener?.onSuccess()
     }
 
 

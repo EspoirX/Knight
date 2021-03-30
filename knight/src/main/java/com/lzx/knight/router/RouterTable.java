@@ -9,8 +9,11 @@ public class RouterTable implements IRouterTable {
     private static HashMap<String, String> routerMap = new HashMap<>();
 
     static {
-        routerMap.put("KnightRouter://ActivityA?name=102", "com.lzx.demo.ActivityA");
-        routerMap.put("KnightRouter://ActivityB?name=103&sex=das", "com.lzx.demo.ActivityB");
+        routerMap.put("KnightRouter://ActivityA", "com.lzx.demo.ActivityA");
+
+        routerMap.put("KnightRouter://ActivityB", "com.lzx.demo.ActivityB");
+        routerMap.put("大胸萝莉://ActivityB", "com.lzx.demo.ActivityB");
+
         routerMap.put("KnightRouter://ActivityC", "com.lzx.demo.ActivityC");
 
         routerMap.put("KnightRouter://ActivityD", "com.lzx.demo.ActivityD");
