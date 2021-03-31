@@ -55,7 +55,9 @@ class MainActivity : AppCompatActivity() {
                 .start()
         }
         btnC?.setOnClickListener {
-            Knight.router(this, "ActivityC").start()
+            Knight.router(this, "ActivityC")
+                .setScheme("XIANGE")
+                .start()
         }
         btnD?.setOnClickListener {
             Knight.router(this, "KnightRouter://ActivityD")

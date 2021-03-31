@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Pair
 import androidx.core.app.ActivityCompat
 import com.lzx.knight.Knight
 import com.lzx.knight.router.CompleteListener.Companion.CODE_ERROR
@@ -23,7 +24,7 @@ object KnightRouter {
     private var defaultScheme = "KnightRouter$FLAG"
 
     private var interceptorService = InterceptorService()
-    private var routerMap = hashMapOf<String, String>()
+    private var routerMap = hashMapOf<String, Pair<String, String>>()
 
     init {
         try {
@@ -35,45 +36,6 @@ object KnightRouter {
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
-    }
-
-    /**
-     * 获取目标界面全类名
-     *
-     * KnightRouter://ActivityC
-     * XIAN://ActivityD
-     *
-     *
-     * ActivityC
-     * XIAN://ActivityD
-     * XIAN://ActivityD?a=1&b=1
-     *
-     */
-    private fun getRouterTarget(path: String, scheme: String?): String? {
-        //获取 key
-        val realPath: String = if (!path.truncateUrlPage().isNullOrEmpty()) {
-            path.substring(0, path.indexOf("?"))
-        } else {
-            path
-        }
-        //看下用户有没有自定义 scheme，如果有，则用自定义的
-        val key: String = if (scheme.isNullOrEmpty()) {
-            //判断path中有没有 scheme
-            if (realPath.contains(FLAG)) realPath else defaultScheme + realPath
-        } else {
-            if (realPath.contains(FLAG)) { //如果path中有scheme，则进行替换
-                val oldScheme = realPath.substring(0, realPath.indexOf(FLAG))
-                realPath.replace(oldScheme, scheme)
-            } else {
-                if (scheme.contains(FLAG)) scheme + realPath else scheme + FLAG + realPath
-            }
-        }
-        var target: String? = null
-        routerMap[key]?.let {
-            val realTarget = it.replace("/", ".")
-            target = realTarget
-        }
-        return target
     }
 
     fun attachInterceptors(interceptors: MutableList<ISyInterceptor>) {
@@ -99,13 +61,17 @@ object KnightRouter {
             paramMap.putAll(pathParams)
         }
 
+        // scheme
+        val scheme = builder.getExtra(RouterBuilder.KEY_SCHEME) as String?
+
         // startActivity
         val intent = Intent()
         //拦截器
+        getRouterIntercepts(routerPath, scheme)
         interceptorService
             .doInterceptions(routerPath, paramMap, intent, object : InterceptorCallback {
                 override fun onContinue(path: String?) {
-                    handlerRouterParams(path, paramMap, intent, builder, listener)
+                    handlerRouterParams(path, scheme, paramMap, intent, builder, listener)
                 }
 
                 override fun onInterrupt(exception: Throwable?) {
@@ -116,6 +82,7 @@ object KnightRouter {
 
     private fun handlerRouterParams(
         routerPath: String?,
+        scheme: String?,
         paramMap: HashMap<String, String>,
         intent: Intent,
         builder: RouterBuilder,
@@ -140,12 +107,10 @@ object KnightRouter {
         val anim = builder.getExtra(RouterBuilder.KEY_START_ACTIVITY_ANIMATION) as IntArray?
         // startActivityForResult
         val requestCode = builder.getExtra(RouterBuilder.KEY_REQUEST_CODE) as Int?
-        // scheme
-        val scheme = builder.getExtra(RouterBuilder.KEY_SCHEME) as String?
         // options
         val options = builder.getExtra(RouterBuilder.KEY_START_ACTIVITY_OPTIONS) as Bundle?
         //获取目标界面全类名
-        val target = getRouterTarget(routerPath, scheme)
+        val target = getRouterClassName(routerPath, scheme)
         if (target.isNullOrEmpty()) {
             listener?.onError(CODE_NOT_FOUND, "router target is not found")
             return
@@ -207,5 +172,63 @@ object KnightRouter {
         }
     }
 
+
+    /**
+     * 获取路由表中的 Key
+     */
+    private fun getRouterKey(path: String, scheme: String?): String {
+        val realPath: String = if (!path.truncateUrlPage().isNullOrEmpty()) {
+            path.substring(0, path.indexOf("?"))
+        } else {
+            path
+        }
+        //看下用户有没有自定义 scheme，如果有，则用自定义的
+        return if (scheme.isNullOrEmpty()) {
+            //判断path中有没有 scheme
+            if (realPath.contains(FLAG)) realPath else defaultScheme + realPath
+        } else {
+            if (realPath.contains(FLAG)) { //如果path中有scheme，则进行替换
+                val oldScheme = realPath.substring(0, realPath.indexOf(FLAG))
+                realPath.replace(oldScheme, scheme)
+            } else {
+                if (scheme.contains(FLAG)) scheme + realPath else scheme + FLAG + realPath
+            }
+        }
+    }
+
+    /**
+     * 获取目标界面全类名
+     */
+    private fun getRouterClassName(path: String, scheme: String?): String? {
+        val key: String = getRouterKey(path, scheme)
+        var target: String? = null
+        routerMap[key]?.let {
+            val realTarget = it.first.replace("/", ".")
+            target = realTarget
+        }
+        return target
+    }
+
+    /**
+     * 获取目标界面上的拦截器
+     */
+    private fun getRouterIntercepts(path: String?, scheme: String?) {
+        if (path.isNullOrEmpty()) return
+
+        val size = routerMap.size
+        Knight.log("routerMap-> size = " + size)
+        routerMap.forEach {
+            Knight.log("routerMap-> key = " + it.key + " value = " + it.value)
+        }
+
+        val key: String = getRouterKey(path, scheme)
+        routerMap[key]?.let {
+            val interceptsStr = it.second
+            if (!interceptsStr.isNullOrEmpty()) {
+                val array = interceptsStr.split(";")
+                Knight.log("array = " + array)
+            }
+        }
+    }
 
 }

@@ -18,15 +18,21 @@ class KnightByteCodeWriter(
         var av0: AnnotationVisitor
         //创建类
         cw.visit(
-            V1_7, ACC_PUBLIC + ACC_SUPER, "com/lzx/knight/KnightServiceManager", null,
-            "java/lang/Object", arrayOf("com/lzx/knight/IServiceManager")
+            V1_7,
+            ACC_PUBLIC + ACC_SUPER,
+            "com/lzx/knight/KnightServiceManager", null,
+            "java/lang/Object",
+            arrayOf("com/lzx/knight/IServiceManager")
         )
         cw.visitSource("KnightServiceManager.java", null)
         //创建变量
         run {
             fv = cw.visitField(
-                ACC_PRIVATE + ACC_FINAL + ACC_STATIC, "serviceMap", "Ljava/util/HashMap;",
-                "Ljava/util/HashMap<Ljava/lang/String;Ljava/lang/String;>;", null
+                ACC_PRIVATE + ACC_FINAL + ACC_STATIC,
+                "serviceMap",
+                "Ljava/util/HashMap;",
+                "Ljava/util/HashMap<Ljava/lang/String;Ljava/lang/String;>;",
+                null
             )
             fv.visitEnd()
         }
@@ -62,8 +68,10 @@ class KnightByteCodeWriter(
         // getServiceImplMap 方法
         run {
             mv = cw.visitMethod(
-                ACC_PUBLIC, "getServiceMap", "()Ljava/util/HashMap;",
-                "()Ljava/util/HashMap<Ljava/lang/String;Ljava/lang/String;>;", null
+                ACC_PUBLIC, "getServiceMap",
+                "()Ljava/util/HashMap;",
+                "()Ljava/util/HashMap<Ljava/lang/String;Ljava/lang/String;>;",
+                null
             )
             //添加 Override 注解
             av0 = mv.visitAnnotation("Ljava.lang/Override;", false)

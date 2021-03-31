@@ -4,8 +4,8 @@ import com.android.build.api.transform.*
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.google.common.collect.ImmutableSet
 import com.plugin.knight.KnightConfig
-import com.quinn.hunter.transform.HunterTransform
-import com.quinn.hunter.transform.asm.BaseWeaver
+import com.plugin.knight.hunter.HunterTransform
+import com.plugin.knight.hunter.asm.BaseWeaver
 import org.gradle.api.Project
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
@@ -23,7 +23,7 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
         ms = System.currentTimeMillis()
         this.bytecodeWeaver = object : BaseWeaver() {
             override fun isWeavableClass(fullQualifiedClassName: String?): Boolean {
-                return shouldProcessClass(fullQualifiedClassName)
+                return KnightConfig.shouldProcessClass(fullQualifiedClassName)
             }
 
             override fun wrapClassWriter(classWriter: ClassWriter?): ClassVisitor {
@@ -49,6 +49,7 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
         isIncremental: Boolean
     ) {
         super.transform(context, inputs, referencedInputs, outputProvider, isIncremental)
+        KnightConfig.showLog("=== KnightTransform isTransform === $isTransform")
         val dest = outputProvider?.getContentLocation(
             "Knight",
             TransformManager.CONTENT_CLASS,
@@ -100,25 +101,10 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
         FileOutputStream(file).use { it.write(byteCodeWriter.getCodeByte()) }
         KnightConfig.showLog("Knight AMS 耗时 = " + (System.currentTimeMillis() - ms))
         KnightConfig.showLog("生成的文件地址 = " + file.absolutePath)
-    }
 
-    private fun shouldProcessClass(name: String?): Boolean {
-        return !(name.isNullOrEmpty() ||
-                name.contains("META-INF") ||
-                name.contains("R\$") ||
-                name.endsWith("R.class") ||
-                name.endsWith("BuildConfig.class") ||
-                name.endsWith("Knight.class") ||
-                name.endsWith("KnightImpl.class") ||
-                name.endsWith("KnightService.class") ||
-                name.startsWith("kotlinx") ||
-                name.startsWith("kotlin") ||
-                name.startsWith("com/google/android") ||
-                name.startsWith("android/support") ||
-                name.startsWith("com.google.android") ||
-                name.startsWith("android.support") ||
-                name.startsWith("org") ||
-                name.startsWith("androidx"))
+        KnightConfig.showLog("                                  ")
+        KnightConfig.showLog("----------RouterTransform---------")
+        KnightConfig.showLog("                                  ")
     }
 
     data class KnightImplInfo(
