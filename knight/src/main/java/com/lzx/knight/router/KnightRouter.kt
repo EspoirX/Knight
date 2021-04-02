@@ -30,14 +30,6 @@ object KnightRouter {
             ex.printStackTrace()
         }
     }
-//
-//    fun attachInterceptors(interceptors: MutableList<ISyInterceptor>) {
-//        interceptorService.attachInterceptors(interceptors)
-//    }
-//
-//    fun addInterceptor(interceptor: ISyInterceptor?) {
-//        interceptorService.addInterceptor(interceptor)
-//    }
 
     /**
      * 开始路由转跳
@@ -217,6 +209,4 @@ object KnightRouter {
             if (scheme.contains(FLAG)) scheme else scheme + FLAG
         }
     }
-
-
 }

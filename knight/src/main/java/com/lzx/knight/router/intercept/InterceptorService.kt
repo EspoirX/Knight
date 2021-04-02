@@ -61,14 +61,10 @@ class InterceptorService {
                 val result = interceptor.process(context, scheme, path, pathParam, intent)
                 //执行下一个
                 doNextInterceptor(index + 1, context, scheme, result, pathParam, intent)
-            } else if (interceptor is AsyncInterceptor) {
+            }
+            if (interceptor is AsyncInterceptor) {
                 //执行下一个
-                interceptor.process(
-                    context,
-                    scheme,
-                    path,
-                    pathParam,
-                    intent,
+                interceptor.process(context, scheme, path, pathParam, intent,
                     object : InterceptorCallback {
                         override fun onContinue(
                             context: Context,
@@ -78,12 +74,8 @@ class InterceptorService {
                             intent: Intent
                         ) {
                             doNextInterceptor(
-                                index + 1,
-                                context,
-                                scheme,
-                                path,
-                                pathParam,
-                                intent
+                                index + 1, context, scheme,
+                                path, pathParam, intent
                             )  //执行下一个
                         }
 
