@@ -2,12 +2,12 @@ package com.lzx.demo
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.lzx.knight.annotations.KnightRouter
+import com.lzx.annotation.KnightRouter
 
 @KnightRouter(
     scheme = "XIANGE",
-    path = ["ActivityC", "ActivityCCCC"],
-    interceptors = [InterceptA::class, InterceptB::class]
+    path = ["ActivityC", "哈哈哈"],
+    interceptors = [InterceptA::class]
 )
 class ActivityC : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

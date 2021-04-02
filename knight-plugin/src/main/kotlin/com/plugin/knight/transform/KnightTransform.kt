@@ -4,8 +4,8 @@ import com.android.build.api.transform.*
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.google.common.collect.ImmutableSet
 import com.plugin.knight.KnightConfig
-import com.plugin.knight.hunter.HunterTransform
-import com.plugin.knight.hunter.asm.BaseWeaver
+import com.quinn.hunter.transform.HunterTransform
+import com.quinn.hunter.transform.asm.BaseWeaver
 import org.gradle.api.Project
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
@@ -49,7 +49,6 @@ class KnightTransform(project: Project?) : HunterTransform(project) {
         isIncremental: Boolean
     ) {
         super.transform(context, inputs, referencedInputs, outputProvider, isIncremental)
-        KnightConfig.showLog("=== KnightTransform isTransform === $isTransform")
         val dest = outputProvider?.getContentLocation(
             "Knight",
             TransformManager.CONTENT_CLASS,

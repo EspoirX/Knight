@@ -3,8 +3,8 @@ package com.im.impl
 import android.content.Context
 import android.widget.Toast
 import com.im.service.ISendMessage
+import com.lzx.annotation.KnightImpl
 import com.lzx.knight.Knight
-import com.lzx.knight.annotations.KnightImpl
 import com.user.service.IUserManager
 
 @KnightImpl

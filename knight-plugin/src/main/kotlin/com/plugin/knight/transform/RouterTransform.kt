@@ -6,13 +6,18 @@ import com.google.common.collect.ImmutableSet
 import com.plugin.knight.KnightConfig
 import com.quinn.hunter.transform.HunterTransform
 import com.quinn.hunter.transform.asm.BaseWeaver
+import org.apache.commons.compress.utils.IOUtils
 import org.gradle.api.Project
+import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 class RouterTransform(project: Project?) : HunterTransform(project) {
 
@@ -51,6 +56,25 @@ class RouterTransform(project: Project?) : HunterTransform(project) {
         isIncremental: Boolean
     ) {
         super.transform(context, inputs, referencedInputs, outputProvider, isIncremental)
+        val initClasses = Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>())
+        val deleteClasses = Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>())
+
+        KnightConfig.handlerChangeOrRemove(
+            isIncremental,
+            inputs,
+            outputProvider,
+            object : KnightConfig.OnModifyListener {
+                override fun onClassChange(className: String) {
+                    KnightConfig.showLog("ChangeCallback -> className = " + className)
+                    initClasses.add(className)
+                }
+
+                override fun onClassDelete(className: String) {
+                    KnightConfig.showLog("DeleteCallback -> className = " + className)
+                    deleteClasses.add(className)
+                }
+            })
+
         val dest = outputProvider?.getContentLocation(
             "Knight",
             TransformManager.CONTENT_CLASS,
@@ -64,9 +88,15 @@ class RouterTransform(project: Project?) : HunterTransform(project) {
             generateRouterClass(file, resultMap)
         } else {
             val inputStream = FileInputStream(file)
-
+            val sourceClassBytes = IOUtils.toByteArray(inputStream)
+            val modifiedClassBytes =
+                modifyClass(sourceClassBytes, initClasses, deleteClasses, resultMap)
+            if (modifiedClassBytes != null) {
+                KnightConfig.saveFile(file, modifiedClassBytes)
+            }
         }
     }
+
 
     private fun generateRouterClass(file: File, resultMap: HashMap<String, NameIntercept>) {
         val routerCodeWriter = RouterCodeWriter(resultMap)
@@ -101,5 +131,25 @@ class RouterTransform(project: Project?) : HunterTransform(project) {
             KnightConfig.showLog("Router映射表 key = " + it.key + " className = " + it.value.className + " intercept = " + it.value.intercept)
         }
         return resultMap
+    }
+
+    @Throws(IOException::class)
+    fun modifyClass(
+        srcClass: ByteArray?,
+        items: MutableSet<String>,
+        deleteItems: MutableSet<String>,
+        resultMap: HashMap<String, NameIntercept>
+    ): ByteArray? {
+        val classWriter = ClassWriter(ClassWriter.COMPUTE_MAXS)
+        val methodFilterCV = ClassFilterVisitor(
+            Opcodes.ASM7,
+            classWriter,
+            items,
+            deleteItems,
+            resultMap
+        )
+        val cr = ClassReader(srcClass)
+        cr.accept(methodFilterCV, ClassReader.SKIP_DEBUG)
+        return classWriter.toByteArray()
     }
 }

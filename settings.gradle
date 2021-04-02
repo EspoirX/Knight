@@ -1,3 +1,5 @@
+include ':annotation'
+include ':compiler'
 include ':IM:service'
 include ':IM:impl'
 

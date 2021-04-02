@@ -43,7 +43,7 @@ class RouterCodeWriter(private val resultMap: HashMap<String, RouterTransform.Na
             mv.visitLabel(l1)
             mv.visitLocalVariable(
                 "this",
-                "Lcom/example/myapplication/RouterTable;",
+                "Lcom/lzx/knight/router/RouterTable;",
                 null,
                 l0,
                 l1,
@@ -51,6 +51,97 @@ class RouterCodeWriter(private val resultMap: HashMap<String, RouterTransform.Na
             )
             mv.visitMaxs(1, 1)
             mv.visitEnd()
+        }
+        //addRouter 方法
+        run {
+            mv = cw.visitMethod(
+                Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, "addRouter",
+                "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", null, null
+            )
+            mv.visitCode()
+            val l0 = Label()
+            mv.visitLabel(l0)
+            mv.visitLineNumber(15, l0)
+            mv.visitFieldInsn(
+                Opcodes.GETSTATIC, "com/lzx/knight/router/RouterTable", "routerMap",
+                "Ljava/util/HashMap;"
+            )
+            mv.visitVarInsn(Opcodes.ALOAD, 0)
+            mv.visitMethodInsn(
+                Opcodes.INVOKEVIRTUAL, "java/util/HashMap", "containsKey", "(Ljava/lang/Object;)Z",
+                false
+            )
+            val l1 = Label()
+            mv.visitJumpInsn(Opcodes.IFNE, l1)
+            val l2 = Label()
+            mv.visitLabel(l2)
+            mv.visitLineNumber(16, l2)
+            mv.visitFieldInsn(
+                Opcodes.GETSTATIC, "com/lzx/knight/router/RouterTable", "routerMap",
+                "Ljava/util/HashMap;"
+            )
+            mv.visitVarInsn(Opcodes.ALOAD, 0)
+            mv.visitTypeInsn(Opcodes.NEW, "android/util/Pair")
+            mv.visitInsn(Opcodes.DUP)
+            mv.visitVarInsn(Opcodes.ALOAD, 1)
+            mv.visitVarInsn(Opcodes.ALOAD, 2)
+            mv.visitMethodInsn(
+                Opcodes.INVOKESPECIAL, "android/util/Pair", "<init>",
+                "(Ljava/lang/Object;Ljava/lang/Object;)V", false
+            )
+            mv.visitMethodInsn(
+                Opcodes.INVOKEVIRTUAL, "java/util/HashMap", "put",
+                "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false
+            )
+            mv.visitInsn(Opcodes.POP)
+            mv.visitLabel(l1)
+            mv.visitLineNumber(18, l1)
+            mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null)
+            mv.visitInsn(Opcodes.RETURN)
+            val l3 = Label()
+            mv.visitLabel(l3)
+            mv.visitLocalVariable("path", "Ljava/lang/String;", null, l0, l3, 0)
+            mv.visitLocalVariable("className", "Ljava/lang/String;", null, l0, l3, 1)
+            mv.visitLocalVariable("intercept", "Ljava/lang/String;", null, l0, l3, 2)
+            mv.visitMaxs(6, 3)
+            mv.visitEnd()
+//            mv = cw.visitMethod(
+//                Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, "addRouter",
+//                "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", null, null
+//            )
+//            mv.visitCode()
+//            val l0 = Label()
+//            mv.visitLabel(l0)
+//            mv.visitLineNumber(15, l0)
+//            mv.visitFieldInsn(
+//                Opcodes.GETSTATIC, "com/lzx/knight/router/RouterTable", "routerMap",
+//                "Ljava/util/HashMap;"
+//            )
+//            mv.visitVarInsn(Opcodes.ALOAD, 0)
+//            mv.visitTypeInsn(Opcodes.NEW, "android/util/Pair")
+//            mv.visitInsn(Opcodes.DUP)
+//            mv.visitVarInsn(Opcodes.ALOAD, 1)
+//            mv.visitVarInsn(Opcodes.ALOAD, 2)
+//            mv.visitMethodInsn(
+//                Opcodes.INVOKESPECIAL, "android/util/Pair", "<init>",
+//                "(Ljava/lang/Object;Ljava/lang/Object;)V", false
+//            )
+//            mv.visitMethodInsn(
+//                Opcodes.INVOKEVIRTUAL, "java/util/HashMap", "put",
+//                "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false
+//            )
+//            mv.visitInsn(Opcodes.POP)
+//            val l1 = Label()
+//            mv.visitLabel(l1)
+//            mv.visitLineNumber(16, l1)
+//            mv.visitInsn(Opcodes.RETURN)
+//            val l2 = Label()
+//            mv.visitLabel(l2)
+//            mv.visitLocalVariable("path", "Ljava/lang/String;", null, l0, l2, 0)
+//            mv.visitLocalVariable("className", "Ljava/lang/String;", null, l0, l2, 1)
+//            mv.visitLocalVariable("intercept", "Ljava/lang/String;", null, l0, l2, 2)
+//            mv.visitMaxs(6, 3)
+//            mv.visitEnd()
         }
         //getRouterMap 方法
         run {
@@ -104,30 +195,20 @@ class RouterCodeWriter(private val resultMap: HashMap<String, RouterTransform.Na
                 val l1 = Label()
                 mv.visitLabel(l1)
                 mv.visitLineNumber(i++, l1)
-                mv.visitFieldInsn(
-                    Opcodes.GETSTATIC, "com/lzx/knight/router/RouterTable", "routerMap",
-                    "Ljava/util/HashMap;"
-                )
                 mv.visitLdcInsn(it.key)
-                mv.visitTypeInsn(Opcodes.NEW, "android/util/Pair")
-                mv.visitInsn(Opcodes.DUP)
                 mv.visitLdcInsn(it.value.className)
                 mv.visitLdcInsn(it.value.intercept)
                 mv.visitMethodInsn(
-                    Opcodes.INVOKESPECIAL, "android/util/Pair", "<init>",
-                    "(Ljava/lang/Object;Ljava/lang/Object;)V", false
+                    Opcodes.INVOKESTATIC, "com/lzx/knight/router/RouterTable", "addRouter",
+                    "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", false
                 )
-                mv.visitMethodInsn(
-                    Opcodes.INVOKEVIRTUAL, "java/util/HashMap", "put",
-                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false
-                )
-                mv.visitInsn(Opcodes.POP)
             }
+
             val l2 = Label()
             mv.visitLabel(l2)
             mv.visitLineNumber(12, l2)
             mv.visitInsn(Opcodes.RETURN)
-            mv.visitMaxs(6, 0)
+            mv.visitMaxs(3, 0)
             mv.visitEnd()
         }
         cw.visitEnd()

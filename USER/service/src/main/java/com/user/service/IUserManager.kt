@@ -1,12 +1,11 @@
 package com.user.service
 
 import android.content.Context
-import com.lzx.knight.annotations.KnightService
 
 /**
  * @KnightService 同样可以标记在抽象类上
  */
-@KnightService
+//@KnightService
 abstract class IUserManager : BaseUserInterface {
 
     /**

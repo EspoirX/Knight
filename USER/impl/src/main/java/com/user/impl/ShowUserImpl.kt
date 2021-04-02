@@ -2,7 +2,7 @@ package com.user.impl
 
 import android.content.Context
 import android.widget.Toast
-import com.lzx.knight.annotations.KnightImpl
+import com.lzx.annotation.KnightImpl
 import com.user.service.ShowUserInterface
 import com.user.service.UserInfo
 

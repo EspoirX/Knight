@@ -1,7 +1,7 @@
 package com.im.service
 
 import android.content.Context
-import com.lzx.knight.annotations.KnightService
+import com.lzx.annotation.KnightService
 
 @KnightService
 interface ISendMessage {

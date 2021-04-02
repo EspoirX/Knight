@@ -1,7 +1,6 @@
 package com.user.service
 
-import com.lzx.knight.annotations.KnightService
 
-@KnightService
+//@KnightService
 abstract class AbsUser : IUserManager() {
 }

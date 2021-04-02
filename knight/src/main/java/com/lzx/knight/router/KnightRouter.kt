@@ -5,46 +5,39 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Pair
 import androidx.core.app.ActivityCompat
 import com.lzx.knight.Knight
 import com.lzx.knight.router.CompleteListener.Companion.CODE_ERROR
 import com.lzx.knight.router.CompleteListener.Companion.CODE_FORBIDDEN
 import com.lzx.knight.router.CompleteListener.Companion.CODE_NOT_FOUND
 import com.lzx.knight.router.CompleteListener.Companion.CODE_SUCCESS
-import com.lzx.knight.router.RouterUtils.getUrlParams
-import com.lzx.knight.router.RouterUtils.truncateUrlPage
 import com.lzx.knight.router.intercept.ISyInterceptor
-import com.lzx.knight.router.intercept.InterceptorCallback
-import com.lzx.knight.router.intercept.InterceptorService
+import com.lzx.knight.router.intercept.interceptorSet
 
 object KnightRouter {
 
     internal const val FLAG = "://"
     private var defaultScheme = "KnightRouter$FLAG"
 
-    private var interceptorService = InterceptorService()
-    private var routerMap = hashMapOf<String, Pair<String, String>>()
+    private var register = RouterRegister()
 
     init {
         try {
             val clazz = Class.forName("com.lzx.knight.router.RouterTable")
-            val table = clazz.newInstance() as IRouterTable?
-            if (table != null) {
-                routerMap = table.getRouterMap()
-            }
+            val table = clazz.newInstance() as IRouterTable
+            table.registerRouter(register)
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
     }
-
-    fun attachInterceptors(interceptors: MutableList<ISyInterceptor>) {
-        interceptorService.attachInterceptors(interceptors)
-    }
-
-    fun addInterceptor(interceptor: ISyInterceptor?) {
-        interceptorService.addInterceptor(interceptor)
-    }
+//
+//    fun attachInterceptors(interceptors: MutableList<ISyInterceptor>) {
+//        interceptorService.attachInterceptors(interceptors)
+//    }
+//
+//    fun addInterceptor(interceptor: ISyInterceptor?) {
+//        interceptorService.addInterceptor(interceptor)
+//    }
 
     /**
      * 开始路由转跳
@@ -53,6 +46,13 @@ object KnightRouter {
         val routerPath = builder.path
         //监听
         val listener = builder.getExtra(RouterBuilder.KEY_COMPLETE_LISTENER) as CompleteListener?
+
+        val context = builder.context
+        if (context == null) {
+            Knight.log("router context is null")
+            listener?.onError(CODE_ERROR, "router context is null")
+            return
+        }
 
         //path 参数
         val pathParams = builder.getExtra(RouterBuilder.KEY_PATH_PARAMS) as HashMap<String, String>?
@@ -66,23 +66,43 @@ object KnightRouter {
 
         // startActivity
         val intent = Intent()
-        //拦截器
-        getRouterIntercepts(routerPath, scheme)
-        interceptorService
-            .doInterceptions(routerPath, paramMap, intent, object : InterceptorCallback {
-                override fun onContinue(path: String?) {
-                    handlerRouterParams(path, scheme, paramMap, intent, builder, listener)
-                }
 
-                override fun onInterrupt(exception: Throwable?) {
-                    listener?.onError(CODE_ERROR, exception?.message.orEmpty())
+        val realScheme = getScheme(routerPath, scheme)
+        val key = getRouterKey(routerPath, realScheme)
+        if (key.isNullOrEmpty()) {
+            Knight.log("can not find path key in the router table")
+            listener?.onError(CODE_NOT_FOUND, "can not find path key in the router table")
+            return
+        }
+
+        val interceptors =
+            builder.getExtra(RouterBuilder.KEY_INTERCEPTOR) as MutableList<ISyInterceptor>?
+        //拦截器
+        interceptorSet {
+            if (!interceptors.isNullOrEmpty()) {
+                interceptors.forEach {
+                    addInterceptor(it)
                 }
-            })
+            }
+            if (!register.routerMap[key]?.interceptors.isNullOrEmpty()) {
+                register.routerMap[key]?.interceptors?.forEach {
+                    addInterceptor(it)
+                }
+            }
+            onContinue = { context: Context, _: String, path: String?,
+                           pathParam: HashMap<String, String>, intent: Intent ->
+                handlerRouterParams(context, path, key, pathParam, intent, builder, listener)
+            }
+            onInterrupt = {
+                listener?.onError(CODE_ERROR, it?.message.orEmpty())
+            }
+        }.doInterceptions(context, realScheme, routerPath, paramMap, intent)
     }
 
     private fun handlerRouterParams(
+        context: Context,
         routerPath: String?,
-        scheme: String?,
+        key: String?,
         paramMap: HashMap<String, String>,
         intent: Intent,
         builder: RouterBuilder,
@@ -91,12 +111,6 @@ object KnightRouter {
         if (routerPath.isNullOrEmpty()) {
             Knight.log("router path is empty")
             listener?.onError(CODE_ERROR, "router path is empty")
-            return
-        }
-        val context = builder.context
-        if (context == null) {
-            Knight.log("router context is null")
-            listener?.onError(CODE_ERROR, "router context is null")
             return
         }
         // Extra
@@ -109,12 +123,15 @@ object KnightRouter {
         val requestCode = builder.getExtra(RouterBuilder.KEY_REQUEST_CODE) as Int?
         // options
         val options = builder.getExtra(RouterBuilder.KEY_START_ACTIVITY_OPTIONS) as Bundle?
+        val map = register.routerMap
         //获取目标界面全类名
-        val target = getRouterClassName(routerPath, scheme)
+        val target = register.routerMap[key]?.className
+
         if (target.isNullOrEmpty()) {
             listener?.onError(CODE_NOT_FOUND, "router target is not found")
             return
         }
+
         var result =
             startActivityImpl(context, intent, target, extras, paramMap, requestCode, options, anim)
         if (limitPackage == true || result == CODE_SUCCESS) {
@@ -176,59 +193,30 @@ object KnightRouter {
     /**
      * 获取路由表中的 Key
      */
-    private fun getRouterKey(path: String, scheme: String?): String {
+    private fun getRouterKey(path: String?, scheme: String): String? {
+        if (path.isNullOrEmpty()) return null
         val realPath: String = if (!path.truncateUrlPage().isNullOrEmpty()) {
             path.substring(0, path.indexOf("?"))
         } else {
             path
         }
-        //看下用户有没有自定义 scheme，如果有，则用自定义的
-        return if (scheme.isNullOrEmpty()) {
-            //判断path中有没有 scheme
-            if (realPath.contains(FLAG)) realPath else defaultScheme + realPath
+        return if (realPath.contains(FLAG)) { //如果path中有scheme，则进行替换
+            val oldScheme = realPath.substring(0, realPath.indexOf(FLAG))
+            realPath.replace(oldScheme, scheme)
         } else {
-            if (realPath.contains(FLAG)) { //如果path中有scheme，则进行替换
-                val oldScheme = realPath.substring(0, realPath.indexOf(FLAG))
-                realPath.replace(oldScheme, scheme)
-            } else {
-                if (scheme.contains(FLAG)) scheme + realPath else scheme + FLAG + realPath
-            }
+            scheme + realPath
         }
     }
 
-    /**
-     * 获取目标界面全类名
-     */
-    private fun getRouterClassName(path: String, scheme: String?): String? {
-        val key: String = getRouterKey(path, scheme)
-        var target: String? = null
-        routerMap[key]?.let {
-            val realTarget = it.first.replace("/", ".")
-            target = realTarget
-        }
-        return target
-    }
-
-    /**
-     * 获取目标界面上的拦截器
-     */
-    private fun getRouterIntercepts(path: String?, scheme: String?) {
-        if (path.isNullOrEmpty()) return
-
-        val size = routerMap.size
-        Knight.log("routerMap-> size = " + size)
-        routerMap.forEach {
-            Knight.log("routerMap-> key = " + it.key + " value = " + it.value)
-        }
-
-        val key: String = getRouterKey(path, scheme)
-        routerMap[key]?.let {
-            val interceptsStr = it.second
-            if (!interceptsStr.isNullOrEmpty()) {
-                val array = interceptsStr.split(";")
-                Knight.log("array = " + array)
-            }
+    private fun getScheme(path: String?, scheme: String?): String {
+        if (path.isNullOrEmpty()) return defaultScheme
+        return if (scheme.isNullOrEmpty()) {
+            val indexOfFlag = path.indexOf(FLAG)
+            if (path.contains(FLAG)) path.substring(0, indexOfFlag) else defaultScheme
+        } else {
+            if (scheme.contains(FLAG)) scheme else scheme + FLAG
         }
     }
+
 
 }

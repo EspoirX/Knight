@@ -1,14 +1,26 @@
 package com.lzx.knight.router.intercept
 
+import android.content.Context
 import android.content.Intent
+
+fun interceptorSet(creation: InterceptorService.() -> Unit) = InterceptorService().apply {
+    creation()
+}
 
 class InterceptorService {
 
+    internal var onContinue: ((context: Context, scheme: String, path: String?, pathParam: HashMap<String, String>, intent: Intent) -> Unit)? =
+        null
+
+    internal var onInterrupt: ((exception: Throwable?) -> Unit)? = null
+
     private var interceptors = mutableListOf<ISyInterceptor>()
 
-    fun attachInterceptors(interceptors: MutableList<ISyInterceptor>) {
-        this.interceptors.clear()
-        this.interceptors.addAll(interceptors)
+    fun attachInterceptors(interceptors: MutableList<ISyInterceptor>?) {
+        interceptors?.let {
+            this.interceptors.clear()
+            this.interceptors.addAll(it)
+        }
     }
 
     fun addInterceptor(interceptor: ISyInterceptor?) {
@@ -16,50 +28,72 @@ class InterceptorService {
     }
 
     fun doInterceptions(
+        context: Context,
+        scheme: String,
         path: String?,
         pathParam: HashMap<String, String>,
         intent: Intent,
-        callback: InterceptorCallback?
     ) {
         if (interceptors.isNullOrEmpty()) {
-            callback?.onContinue(path)
+            onContinue?.invoke(context, scheme, path, pathParam, intent)
             return
         }
         try {
-            doNextInterceptor(0, path, pathParam, intent, callback)
+            doNextInterceptor(0, context, scheme, path, pathParam, intent)
         } catch (ex: Exception) {
             ex.printStackTrace()
-            callback?.onInterrupt(ex)
+            onInterrupt?.invoke(ex)
             interceptors.clear()
         }
     }
 
     private fun doNextInterceptor(
         index: Int,
+        context: Context,
+        scheme: String,
         path: String?,
         pathParam: HashMap<String, String>,
-        intent: Intent,
-        callback: InterceptorCallback?
+        intent: Intent
     ) {
         if (index < interceptors.size) {
             val interceptor = interceptors[index]
             if (interceptor is SyncInterceptor) {
-                val result = interceptor.process(path, pathParam, intent)
-                doNextInterceptor(index + 1, result, pathParam, intent, callback) //执行下一个
+                val result = interceptor.process(context, scheme, path, pathParam, intent)
+                //执行下一个
+                doNextInterceptor(index + 1, context, scheme, result, pathParam, intent)
             } else if (interceptor is AsyncInterceptor) {
-                interceptor.process(path, pathParam, intent, object : InterceptorCallback {
-                    override fun onContinue(path: String?) {
-                        doNextInterceptor(index + 1, path, pathParam, intent, callback)  //执行下一个
-                    }
+                //执行下一个
+                interceptor.process(
+                    context,
+                    scheme,
+                    path,
+                    pathParam,
+                    intent,
+                    object : InterceptorCallback {
+                        override fun onContinue(
+                            context: Context,
+                            scheme: String,
+                            path: String?,
+                            pathParam: HashMap<String, String>,
+                            intent: Intent
+                        ) {
+                            doNextInterceptor(
+                                index + 1,
+                                context,
+                                scheme,
+                                path,
+                                pathParam,
+                                intent
+                            )  //执行下一个
+                        }
 
-                    override fun onInterrupt(exception: Throwable?) {
-                        callback?.onInterrupt(exception)
-                    }
-                })
+                        override fun onInterrupt(exception: Throwable?) {
+                            onInterrupt?.invoke(exception)
+                        }
+                    })
             }
         } else {
-            callback?.onContinue(path)
-            interceptors.clear()
+            onContinue?.invoke(context, scheme, path, pathParam, intent)
         }
     }
 }
